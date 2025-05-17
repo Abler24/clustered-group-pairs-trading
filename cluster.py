@@ -3,12 +3,13 @@ import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 from statsmodels.tsa.stattools import coint
+import matplotlib.pyplot as plt
+from collections import Counter
+
 
 # Define start and end dates for clustering period
 clusterStart = "2018-01-01"
 clusterEnd = "2022-12-31"
-
-groupSize = 5
 
 dataPath = "stock_data.parquet"
 
@@ -53,6 +54,43 @@ for ticker, label in zip(stocks, clusterLabels):
 print("\nClusters found:")
 for label, tickers in clusterMap.items():
     print(f"Cluster {label}: {tickers}")
+
+top_labels = [label for label, _ in Counter(clusterLabels).most_common(6)]
+subset_idx = [i for i, lbl in enumerate(clusterLabels) if lbl in top_labels]
+
+plt.figure(figsize=(12, 8))
+scatter = plt.scatter(
+    pcaTransformed[subset_idx, 0],
+    pcaTransformed[subset_idx, 1],
+    c=[clusterLabels[i] for i in subset_idx],
+    cmap='tab10',  # 10 distinguishable colors
+    alpha=0.7
+)
+plt.xlabel('PCA Component 1')
+plt.ylabel('PCA Component 2')
+plt.title('Top 5 Clusters via PCA + KMeans')
+plt.colorbar(scatter, label='Cluster')
+plt.grid(True)
+plt.tight_layout()
+plt.savefig("top_clusters_pca.png", dpi=300)
+plt.show()
+
+mean_returns = log_returns.mean()
+volatilities = log_returns.std()
+
+# Plot
+cluster_sizes = Counter(clusterLabels)
+labels = list(cluster_sizes.keys())
+sizes = list(cluster_sizes.values())
+
+plt.figure(figsize=(10, 6))
+plt.bar(labels, sizes, color='skyblue')
+plt.xlabel("Cluster Label")
+plt.ylabel("Number of Stocks")
+plt.title("Size of Each Cluster")
+plt.tight_layout()
+plt.savefig("cluster_size_barplot.png", dpi=300)
+plt.show()
 
 maxSubsetSize = 10
 minSubsetSize = 2
