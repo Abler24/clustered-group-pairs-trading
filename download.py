@@ -58,8 +58,8 @@ def saveData(df, filename=dataPath):
     maxDate = df.index.max()
     print(f"Available data date range: {minDate} to {maxDate}")
     df.to_parquet(filename, engine="pyarrow")
-    print(f"✅ Saved cleaned data to {filename}")
-    print(f"DataFrame Shape: {df.shape}")
+    print(f"Saved data")
+    print(f"Shape: {df.shape}")
 
 rawData = fetchStockData(tickers)
 if rawData is not None:

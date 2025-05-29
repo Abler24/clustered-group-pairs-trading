@@ -7,14 +7,14 @@ import matplotlib.pyplot as plt
 from collections import Counter
 
 
-# Define start and end dates for clustering period
+# start and end dates for clustering period
 clusterStart = "2018-01-01"
 clusterEnd = "2022-12-31"
 
 dataPath = "stock_data.parquet"
 
 try:
-    # Load cleaned price data (from fetch.py)
+    # Load price data fetch.py
     df = pd.read_parquet(dataPath)
     # Some data sources store columns as multi‑index tuples, e.g. ('MMM','MMM').
     # Flatten any tuple columns to simple ticker strings.
@@ -39,8 +39,7 @@ stocks_raw = log_returns.columns.tolist()
 stocks = [col[0] if isinstance(col, tuple) else col for col in stocks_raw]
 returnsMatrix = log_returns[stocks].T.values  # shape: (num_stocks, num_days)
 
-n_components = 5
-pca = PCA(n_components=n_components)
+pca = PCA(n_components=5)
 pcaTransformed = pca.fit_transform(returnsMatrix)
 
 n_clusters = 20
@@ -192,4 +191,21 @@ print("\n Mapping saved to file.")
 
 statsDf = pd.DataFrame(clusterStats)
 statsDf.to_csv("cluster_stats.csv", index=False)
+
 print("\n Stats saved to file.")
+
+# Plot post filtering
+plt.figure(figsize=(10, 6))
+filtered_ids = statsDf['cluster']
+filtered_sizes = statsDf['chosen_size']
+filtered_avg_scores = statsDf['avg_coint_score']
+bars = plt.bar(filtered_ids, filtered_sizes, color='lightgreen')
+plt.xlabel('Cluster ID')
+plt.ylabel('Number of Tickers')
+plt.title('Filterered Cluster Sizes with Cointegration Scores')
+for bar, score in zip(bars, filtered_avg_scores):
+    height = bar.get_height()
+    plt.text(bar.get_x() + bar.get_width()/2, height + 0.1, f'{score:.2f}', ha='center', va='bottom')
+plt.tight_layout()
+plt.savefig("filtered_cluster_size_scores.png", dpi=300)
+plt.show()

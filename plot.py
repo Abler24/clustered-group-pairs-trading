@@ -77,5 +77,4 @@ plt.grid(True)
 plt.tight_layout()
 
 # Save &/or show
-plt.savefig("equity_vs_benchmarks.png", dpi=300)
 plt.show()

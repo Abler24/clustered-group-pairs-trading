@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import statsmodels.api as sm
 
-# 0. Global Configuration
+# Global Configuration
 dataPath = "stock_data.parquet"
 clusterMapPath = "cluster_mapping.csv"   # raw candidate clusters from Phase 1
 
@@ -11,11 +11,11 @@ valStart = "2022-01-01"
 valEnd   = "2022-12-31"
 
 # Trading parameters
-entryThres   = 1.8
+entryThres   = 2
 exitThres    = 0.0
-rollingWindow    = 20          # look‑back window for rolling OLS & z‑score
-riskMultiplier   = 100_00    
-capitalPerGroup = 100_000
+rollingWindow    = 60          # look‑back window for rolling OLS & z‑score
+riskMultiplier   = 10000    
+capitalPerGroup = 100000
 tradingDays      = 252
 
 try:
@@ -37,26 +37,44 @@ except Exception as e:
 clusterGroups = clusterMap.groupby("cluster")["ticker"].apply(list).to_dict()
 
 def construct_basket_spread(tickers, priceFrame, windowLen=rollingWindow):
-    """Return spread series and z-score series """
+    """Return spread series and z-score series using best-y-by-R² selection"""
     sub_df = priceFrame[tickers].dropna()
-    if len(sub_df) < windowLen:
+    if len(sub_df) < windowLen or len(tickers) < 2:
         return None, None
 
     logPrices = np.log(sub_df)
-    spreadSeries     = pd.Series(index=logPrices.index, dtype=float)
 
+    # 1. Find best dependent y highest R² vs rest
+    best_y_idx = 0
+    best_r2 = -np.inf
+    for i in range(len(tickers)):
+        y = logPrices.iloc[:, i]
+        X = sm.add_constant(logPrices.drop(columns=logPrices.columns[i]))
+        try:
+            model = sm.OLS(y, X).fit()
+            r2 = model.rsquared
+            if r2 > best_r2:
+                best_r2 = r2
+                best_y_idx = i
+        except Exception:
+            continue
+
+    # Build spread using selected y
+    spreadSeries = pd.Series(index=logPrices.index, dtype=float)
     for i in range(windowLen - 1, len(logPrices)):
         window_data = logPrices.iloc[i - windowLen + 1 : i + 1]
-        y = window_data.iloc[:, 0]
-        X = sm.add_constant(window_data.iloc[:, 1:])
+        y = window_data.iloc[:, best_y_idx]
+        X = window_data.drop(columns=window_data.columns[best_y_idx])
+        X = sm.add_constant(X)
         hedge = sm.OLS(y, X).fit().params
 
-        row   = logPrices.iloc[i]
-        X_now = np.insert(row[1:].values.reshape(1, -1), 0, 1, axis=1)
-        spreadSeries.iloc[i] = row.iloc[0] - np.dot(X_now, hedge.values).item()
+        row = logPrices.iloc[i]
+        X_now = row.drop(labels=row.index[best_y_idx])
+        X_now = np.insert(X_now.values.reshape(1, -1), 0, 1, axis=1)
+        spreadSeries.iloc[i] = row.iloc[best_y_idx] - np.dot(X_now, hedge.values).item()
 
     spreadSeries = spreadSeries.dropna()
-    zScores      = (spreadSeries - spreadSeries.expanding(min_periods=2).mean()) / spreadSeries.expanding(min_periods=2).std()
+    zScores = (spreadSeries - spreadSeries.expanding(min_periods=2).mean()) / spreadSeries.expanding(min_periods=2).std()
     return spreadSeries, zScores
 
 def generate_signals(zscore, entryThres=entryThres, exitThres=exitThres):
@@ -116,7 +134,7 @@ for clusterId, tickers in clusterGroups.items():
         "percentReturn" : stats["totalPnl"] / capitalPerGroup * 100
     })
     results.append(stats)
-    print(f"... done, return {stats['totalPnl']:.2f}%")
+    print(f"... done, return {stats['percentReturn']:.2f}")
 
 if not results:
     print("No clusters validated.")
