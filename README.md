@@ -2,7 +2,7 @@
 
 This project explores a group based statistical arbitrage strategy. The pipeline from data collection to backtesting aims to identify and trade on mean reverting relationships between small baskets of cointegrated stocks.
 
-The standard pairs trading framework (long one asset, short another) is well studied. But in modern equity markets, relationships often extend beyond simple pairs. Think of airlines, payments, or homebuilders: groups of related stocks that drift together, diverge temporarily, and frequently revert.
+The standard pairs trading framework (long one asset, short another) is well studied. But in modern equity markets, relationships often extend beyond simple pairs. Think of airlines or other groups of related stocks that drift together, diverge temporarily, and frequently revert.
 
 This repository builds a generalization of the pairs trading idea. Instead of handpicking ticker pairs, I use unsupervised learning to cluster similar stocks. From there, I filter clusters using cointegration, and trade these spreads with a rules based approach.
 
