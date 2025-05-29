@@ -71,7 +71,6 @@ plt.title('Top 5 Clusters via PCA + KMeans')
 plt.colorbar(scatter, label='Cluster')
 plt.grid(True)
 plt.tight_layout()
-plt.savefig("top_clusters_pca.png", dpi=300)
 plt.show()
 
 mean_returns = log_returns.mean()
@@ -88,7 +87,6 @@ plt.xlabel("Cluster Label")
 plt.ylabel("Number of Stocks")
 plt.title("Size of Each Cluster")
 plt.tight_layout()
-plt.savefig("cluster_size_barplot.png", dpi=300)
 plt.show()
 
 maxSubsetSize = 10
@@ -207,5 +205,4 @@ for bar, score in zip(bars, filtered_avg_scores):
     height = bar.get_height()
     plt.text(bar.get_x() + bar.get_width()/2, height + 0.1, f'{score:.2f}', ha='center', va='bottom')
 plt.tight_layout()
-plt.savefig("filtered_cluster_size_scores.png", dpi=300)
 plt.show()
