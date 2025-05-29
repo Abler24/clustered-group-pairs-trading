@@ -154,7 +154,7 @@ The top ten clusters are used for the official backtest.
 
 ---
 
-## Step 6: Execution and Risk Controls (backtest.py)
+## Step 6: Backtesting (backtest.py)
 
 Each cluster is allocated a fixed capitalPerGroup of $100,000, with a total strategy budget of $1,000,000, to simulate a real portfolio.
 
