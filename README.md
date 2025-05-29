@@ -160,8 +160,8 @@ Each cluster is allocated a fixed capitalPerGroup of $100,000, with a total stra
 
 - Trades are executed with a 1-day latency (latencyDays=1), meaning the model makes decisions today but executes them using tomorrow’s prices, simulating signal decay and order queuing.
 - The backtest models transaction costs using three components: Commission (commissionBps=0.0005), Slippage: (slippageBps=0.001 + realized vol × volSlippageMult), and Market impact: (impactBps=0.002)
-- Position sizes are scaled to achieve a target volatility of 1% daily (targetVolPct=0.01) by inversely weighting trades based on recent 30-day spread volatility, simulating a risk-managed exposure per group.
-- A 5% trailing drawdown stop-loss (stopLossPct=0.05) per cluster zeroes out all future trades once cumulative returns fall below that threshold, mimicking capital risk controls used by real-world funds.
+- Position sizes are adjusted so that more capital is allocated to clusters with lower recent 30 day spread volatility and less to clusters with higher volatility, using inverse weighting. This keeps the overall daily portfolio risk balanced at the target 1% level. 
+- A 5% trailing drawdown stop loss (stopLossPct=0.05) per cluster zeroes out all future trades once cumulative returns fall below that threshold, mimicking capital risk controls used by real-world funds.
   
 ---
 
